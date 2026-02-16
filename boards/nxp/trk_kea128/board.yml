@@ -1,0 +1,6 @@
+board:
+  name: trk_kea128
+  full_name: TRK-KEA128
+  vendor: nxp
+  socs:
+    - name: skeaz1284

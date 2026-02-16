@@ -1,0 +1,17 @@
+manifest:
+  version: 0.13
+
+  remotes:
+    - name: zephyrproject
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject
+      revision: main
+      west-commands: scripts/west-commands.yml
+    - name: cmsis_6
+      remote: zephyrproject
+      repo-path: CMSIS_6
+      path: modules/hal/cmsis_6
+      revision: main

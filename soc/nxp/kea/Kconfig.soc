@@ -1,0 +1,25 @@
+config SOC_FAMILY_NXP_KEA
+	bool
+
+config SOC_FAMILY
+	default "nxp_kea" if SOC_FAMILY_NXP_KEA
+
+config SOC_SERIES_KEA
+	bool
+	select SOC_FAMILY_NXP_KEA
+
+config SOC_SERIES
+	default "kea" if SOC_SERIES_KEA
+
+config SOC_SKEAZ1284
+	bool
+	select SOC_SERIES_KEA
+
+config SOC
+	default "skeaz1284" if SOC_SKEAZ1284
+
+config SOC_PART_NUMBER_SKEAZ128XXX4
+	bool
+
+config SOC_PART_NUMBER
+	default "SKEAZ128xxx4" if SOC_PART_NUMBER_SKEAZ128XXX4

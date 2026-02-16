@@ -1,0 +1,199 @@
+#include <arm/armv6-m.dtsi>
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "nxp,kea-pinctrl";
+		status = "okay";
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-m0+";
+			reg = <0>;
+			clock-frequency = <20971520>;
+		};
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		simclk: clock-controller@40048000 {
+			compatible = "nxp,kea-sim-clock";
+			reg = <0x40048000 0x28>;
+			clock-frequency = <20971520>;
+			#clock-cells = <1>;
+			status = "okay";
+		};
+
+		flash0: flash@0 {
+			compatible = "soc-nv-flash";
+			reg = <0x00000000 0x00020000>;
+		};
+
+		sram0: memory@1ffff000 {
+			compatible = "mmio-sram";
+			reg = <0x1ffff000 0x00004000>;
+		};
+
+		gpioa: gpio@400ff000 {
+			compatible = "nxp,kea-gpio";
+			reg = <0x400ff000 0x1c>;
+			interrupts = <24 0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <32>;
+			status = "okay";
+		};
+
+		gpiob: gpio@400ff040 {
+			compatible = "nxp,kea-gpio";
+			reg = <0x400ff040 0x1c>;
+			interrupts = <25 0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <32>;
+			status = "okay";
+		};
+
+		gpioc: gpio@400ff080 {
+			compatible = "nxp,kea-gpio";
+			reg = <0x400ff080 0x1c>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <32>;
+			status = "okay";
+		};
+
+		uart2: serial@4006c000 {
+			compatible = "nxp,kea-uart";
+			reg = <0x4006c000 0x8>;
+			interrupts = <14 0>;
+			current-speed = <115200>;
+			clock-frequency = <20971520>;
+			clocks = <&simclk 0x00400000>;
+			nxp,clock-gate-mask = <0x00400000>;
+			nxp,pinsel1-mask = <0x00002000>;
+			status = "disabled";
+		};
+
+		adc0: adc@4003b000 {
+			compatible = "nxp,kea-adc";
+			reg = <0x4003b000 0x20>;
+			interrupts = <15 0>;
+			clock-frequency = <20971520>;
+			clocks = <&simclk 0x20000000>;
+			nxp,clock-gate-mask = <0x20000000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#io-channel-cells = <1>;
+			status = "disabled";
+		};
+
+		i2c0: i2c@40066000 {
+			compatible = "nxp,kea-i2c";
+			reg = <0x40066000 0x0c>;
+			interrupts = <8 0>;
+			clock-frequency = <100000>;
+			nxp,module-clock-frequency = <20971520>;
+			clocks = <&simclk 0x00010000>;
+			nxp,clock-gate-mask = <0x00010000>;
+			nxp,pinsel0-mask = <0x00000020>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		i2c1: i2c@40067000 {
+			compatible = "nxp,kea-i2c";
+			reg = <0x40067000 0x0c>;
+			interrupts = <9 0>;
+			clock-frequency = <100000>;
+			nxp,module-clock-frequency = <20971520>;
+			clocks = <&simclk 0x00020000>;
+			nxp,clock-gate-mask = <0x00020000>;
+			nxp,pinsel1-mask = <0x00000400>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		spi0: spi@40076000 {
+			compatible = "nxp,kea-spi";
+			reg = <0x40076000 0x8>;
+			interrupts = <10 0>;
+			nxp,clock-frequency = <20971520>;
+			clocks = <&simclk 0x00040000>;
+			nxp,clock-gate-mask = <0x00040000>;
+			nxp,pinsel0-mask = <0x00000040>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		spi1: spi@40077000 {
+			compatible = "nxp,kea-spi";
+			reg = <0x40077000 0x8>;
+			interrupts = <11 0>;
+			nxp,clock-frequency = <20971520>;
+			clocks = <&simclk 0x00080000>;
+			nxp,clock-gate-mask = <0x00080000>;
+			nxp,pinsel1-mask = <0x00000800>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		pwm2: pwm@4003a000 {
+			compatible = "nxp,kea-ftm-pwm";
+			reg = <0x4003a000 0x9c>;
+			interrupts = <19 0>;
+			clock-frequency = <20971520>;
+			clocks = <&simclk 0x00000080>;
+			nxp,clock-gate-mask = <0x00000080>;
+			nxp,prescaler = <7>;
+			#pwm-cells = <3>;
+			status = "disabled";
+		};
+
+		pit0: counter@40037000 {
+			compatible = "nxp,kea-pit-counter";
+			reg = <0x40037000 0x120>;
+			interrupts = <22 0>, <23 0>;
+			interrupt-names = "ch0", "ch1";
+			clock-frequency = <20971520>;
+			clocks = <&simclk 0x00000002>;
+			nxp,clock-gate-mask = <0x00000002>;
+			status = "disabled";
+		};
+
+		can0: can@40024000 {
+			compatible = "nxp,kea-mscan";
+			reg = <0x40024000 0x40>;
+			interrupts = <30 0>, <31 0>;
+			interrupt-names = "rx", "tx";
+			clock-frequency = <20971520>;
+			clocks = <&simclk 0x00008000>;
+			nxp,clock-gate-mask = <0x00008000>;
+			nxp,pinsel1-mask = <0x00010000>;
+			status = "disabled";
+		};
+
+		wdog0: watchdog@40052000 {
+			compatible = "nxp,kea-wdog";
+			reg = <0x40052000 0x8>;
+			interrupts = <28 0>;
+			status = "disabled";
+		};
+	};
+};
+
+&nvic {
+	arm,num-irq-priority-bits = <2>;
+};

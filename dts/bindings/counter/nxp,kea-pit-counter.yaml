@@ -1,0 +1,33 @@
+description: NXP Kinetis KEA PIT counter
+
+compatible: "nxp,kea-pit-counter"
+
+include: base.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+
+  interrupts:
+    type: array
+    required: true
+
+  interrupt-names:
+    type: string-array
+    required: true
+    description: Must contain ch0 and ch1
+
+  clock-frequency:
+    type: int
+    required: true
+    description: PIT input clock frequency in Hz
+
+  clocks:
+    type: phandle-array
+    required: true
+    description: Clock controller phandle and gate mask
+
+  nxp,clock-gate-mask:
+    type: int
+    description: Deprecated legacy SIM_SCGC bitmask

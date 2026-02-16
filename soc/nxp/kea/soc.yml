@@ -1,0 +1,6 @@
+family:
+  - name: nxp_kea
+    series:
+      - name: kea
+        socs:
+          - name: skeaz1284

@@ -1,0 +1,20 @@
+identifier: trk_kea128
+name: NXP TRK-KEA128
+arch: arm
+type: mcu
+ram: 16
+flash: 128
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - kernel
+  - gpio
+  - serial
+  - i2c
+  - spi
+  - adc
+  - pwm
+  - counter
+  - can
+vendor: nxp

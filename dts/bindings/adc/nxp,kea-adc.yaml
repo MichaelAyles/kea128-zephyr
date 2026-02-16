@@ -1,0 +1,34 @@
+description: NXP Kinetis KEA ADC
+
+compatible: "nxp,kea-adc"
+
+include: adc-controller.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+
+  interrupts:
+    type: array
+    required: true
+
+  "#io-channel-cells":
+    const: 1
+
+  clock-frequency:
+    type: int
+    required: true
+    description: ADC input clock frequency in Hz
+
+  clocks:
+    type: phandle-array
+    required: true
+    description: Clock controller phandle and gate mask
+
+  nxp,clock-gate-mask:
+    type: int
+    description: Deprecated legacy SIM_SCGC bitmask
+
+io-channel-cells:
+  - input

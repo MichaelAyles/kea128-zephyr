@@ -1,0 +1,18 @@
+description: NXP Kinetis KEA pin controller
+
+compatible: "nxp,kea-pinctrl"
+
+include: base.yaml
+
+child-binding:
+  description: KEA pinctrl state node
+  child-binding:
+    description: KEA pinctrl group
+    properties:
+      pinmux:
+        type: array
+        required: true
+        description: |
+          Encoded SIM routing values.
+          bit31 selects SIM_PINSEL1 when set, otherwise SIM_PINSEL.
+          bits30..0 are ORed into the selected register.

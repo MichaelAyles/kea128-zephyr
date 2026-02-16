@@ -1,0 +1,99 @@
+config SOC_SERIES_KEA
+	select ARM
+	select CLOCK_CONTROL
+	select CPU_CORTEX_M0PLUS
+	select CPU_CORTEX_M_HAS_SYSTICK
+	select CPU_CORTEX_M_HAS_VTOR
+	select PINCTRL
+	select SOC_EARLY_INIT_HOOK
+
+if SOC_SERIES_KEA
+
+config UART_KEA
+	bool "NXP KEA UART driver"
+	default y
+	depends on SERIAL && DT_HAS_NXP_KEA_UART_ENABLED
+	select SERIAL_HAS_DRIVER
+	help
+	  Enable the UART driver for KEA UART peripherals.
+
+config ADC_KEA
+	bool "NXP KEA ADC driver"
+	default y
+	depends on ADC && DT_HAS_NXP_KEA_ADC_ENABLED
+	help
+	  Enable the ADC driver for KEA ADC peripherals.
+
+config GPIO_KEA
+	bool "NXP KEA GPIO driver"
+	default y
+	depends on GPIO && DT_HAS_NXP_KEA_GPIO_ENABLED
+	help
+	  Enable the GPIO driver for KEA GPIO peripherals.
+
+config I2C_KEA
+	bool "NXP KEA I2C driver"
+	default y
+	depends on I2C && DT_HAS_NXP_KEA_I2C_ENABLED
+	help
+	  Enable the I2C controller driver for KEA I2C peripherals.
+
+config SPI_KEA
+	bool "NXP KEA SPI driver"
+	default y
+	depends on SPI && DT_HAS_NXP_KEA_SPI_ENABLED
+	help
+	  Enable the SPI controller driver for KEA SPI peripherals.
+
+config PWM_KEA_FTM
+	bool "NXP KEA FTM PWM driver"
+	default y
+	depends on PWM && DT_HAS_NXP_KEA_FTM_PWM_ENABLED
+	help
+	  Enable the PWM driver for KEA FTM peripherals.
+
+config COUNTER_KEA_PIT
+	bool "NXP KEA PIT counter driver"
+	default y
+	depends on COUNTER && DT_HAS_NXP_KEA_PIT_COUNTER_ENABLED
+	help
+	  Enable the counter driver for KEA PIT peripherals.
+
+config CAN_KEA_MSCAN
+	bool "NXP KEA MSCAN driver"
+	default y
+	depends on CAN && DT_HAS_NXP_KEA_MSCAN_ENABLED && !CAN_FD_MODE
+	help
+	  Enable the CAN 2.0 driver for KEA MSCAN peripherals.
+
+config CAN_KEA_MSCAN_MAX_FILTER
+	int "NXP KEA MSCAN maximum RX filters"
+	default 8
+	range 1 16
+	depends on CAN_KEA_MSCAN
+	help
+	  Number of software RX filters available in the KEA MSCAN driver.
+
+config WDT_KEA
+	bool "NXP KEA watchdog driver"
+	default y
+	depends on WATCHDOG && DT_HAS_NXP_KEA_WDOG_ENABLED
+	select HAS_WDT_NO_CALLBACKS
+	help
+	  Enable the watchdog driver for KEA WDOG peripherals.
+
+config CLOCK_CONTROL_KEA_SIM
+	bool "NXP KEA SIM clock control driver"
+	default y
+	depends on CLOCK_CONTROL && DT_HAS_NXP_KEA_SIM_CLOCK_ENABLED
+	help
+	  Enable the SIM-backed clock control driver for KEA peripherals.
+
+config PINCTRL_KEA
+	bool "NXP KEA pin control support"
+	default y
+	depends on PINCTRL && DT_HAS_NXP_KEA_PINCTRL_ENABLED
+	help
+	  Enable pin control support for KEA SIM PINSEL/PINSEL1 routing.
+
+endif # SOC_SERIES_KEA

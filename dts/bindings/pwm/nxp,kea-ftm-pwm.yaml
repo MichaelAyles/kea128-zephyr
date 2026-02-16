@@ -1,0 +1,52 @@
+description: NXP Kinetis KEA FTM PWM
+
+compatible: "nxp,kea-ftm-pwm"
+
+include:
+  - pwm-controller.yaml
+  - pinctrl-device.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+
+  interrupts:
+    type: array
+    required: true
+
+  "#pwm-cells":
+    const: 3
+
+  clock-frequency:
+    type: int
+    required: true
+    description: FTM input clock frequency in Hz
+
+  clocks:
+    type: phandle-array
+    required: true
+    description: Clock controller phandle and gate mask
+
+  nxp,clock-gate-mask:
+    type: int
+    description: Deprecated legacy SIM_SCGC bitmask
+
+  nxp,prescaler:
+    type: int
+    default: 7
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+    description: Prescaler field value programmed in FTM_SC[PS]
+
+pwm-cells:
+  - channel
+  - period
+  - flags

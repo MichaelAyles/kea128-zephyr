@@ -1,0 +1,38 @@
+description: NXP Kinetis KEA SPI
+
+compatible: "nxp,kea-spi"
+
+include:
+  - spi-controller.yaml
+  - pinctrl-device.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+
+  interrupts:
+    type: array
+    required: true
+
+  nxp,clock-frequency:
+    type: int
+    required: true
+    description: SPI peripheral module clock in Hz
+
+  clocks:
+    type: phandle-array
+    required: true
+    description: Clock controller phandle and gate mask
+
+  nxp,clock-gate-mask:
+    type: int
+    description: Deprecated legacy SIM_SCGC bitmask
+
+  nxp,pinsel0-mask:
+    type: int
+    description: Deprecated legacy SIM_PINSEL bits
+
+  nxp,pinsel1-mask:
+    type: int
+    description: Deprecated legacy SIM_PINSEL1 bits

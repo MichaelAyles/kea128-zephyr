@@ -1,0 +1,99 @@
+/dts-v1/;
+
+#include <nxp/kea/nxp_skeaz1284.dtsi>
+
+/ {
+	model = "NXP TRK-KEA128";
+	compatible = "nxp,trk-kea128";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+	};
+
+	aliases {
+		gpio-0 = &gpioa;
+		uart-0 = &uart2;
+		i2c-0 = &i2c0;
+		spi-0 = &spi0;
+		adc-0 = &adc0;
+		pwm-0 = &pwm2;
+		counter-0 = &pit0;
+		can-0 = &can0;
+		watchdog0 = &wdog0;
+	};
+};
+
+&pinctrl {
+	uart2_default: uart2_default {
+		group0 {
+			/* PINSEL1[13] */
+			pinmux = <0x80002000>;
+		};
+	};
+
+	i2c0_default: i2c0_default {
+		group0 {
+			/* PINSEL[5] */
+			pinmux = <0x00000020>;
+		};
+	};
+
+	spi0_default: spi0_default {
+		group0 {
+			/* PINSEL[6] */
+			pinmux = <0x00000040>;
+		};
+	};
+
+	can0_default: can0_default {
+		group0 {
+			/* PINSEL1[16] */
+			pinmux = <0x80010000>;
+		};
+	};
+};
+
+&uart2 {
+	status = "okay";
+	pinctrl-0 = <&uart2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-names = "default";
+};
+
+&spi0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-names = "default";
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&pwm2 {
+	status = "okay";
+};
+
+&pit0 {
+	status = "okay";
+};
+
+&can0 {
+	status = "okay";
+	pinctrl-0 = <&can0_default>;
+	pinctrl-names = "default";
+	bitrate = <125000>;
+	sample-point = <875>;
+};
+
+&wdog0 {
+	status = "okay";
+};

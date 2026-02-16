@@ -1,0 +1,14 @@
+description: NXP Kinetis KEA watchdog
+
+compatible: "nxp,kea-wdog"
+
+include: base.yaml
+
+properties:
+  reg:
+    type: array
+    required: true
+
+  interrupts:
+    type: array
+    required: true

@@ -1,0 +1,4 @@
+# NXP TRK-KEA128 board configuration
+
+config BOARD_TRK_KEA128
+	select SOC_SKEAZ1284
