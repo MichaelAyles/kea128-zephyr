@@ -31,4 +31,7 @@ config KEA_TEST_CAN
 config KEA_TEST_WDT
 	bool "Build watchdog test path"
 
+config KEA_TEST_FLASH
+	bool "Build flash test path"
+
 endmenu

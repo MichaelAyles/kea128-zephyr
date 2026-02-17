@@ -89,6 +89,16 @@ config CLOCK_CONTROL_KEA_SIM
 	help
 	  Enable the SIM-backed clock control driver for KEA peripherals.
 
+config FLASH_KEA_FTMRE
+	bool "NXP KEA FTMRE flash driver"
+	default y
+	depends on FLASH && DT_HAS_NXP_KEA_FTMRE_FLASH_CONTROLLER_ENABLED
+	select FLASH_HAS_DRIVER_ENABLED
+	select FLASH_HAS_EXPLICIT_ERASE
+	select FLASH_HAS_PAGE_LAYOUT
+	help
+	  Enable the internal flash driver for the KEA FTMRE controller.
+
 config PINCTRL_KEA
 	bool "NXP KEA pin control support"
 	default y

@@ -9,6 +9,8 @@
 	chosen {
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
+		zephyr,flash-controller = &ftmre;
+		zephyr,code-partition = &app_partition;
 		zephyr,console = &uart2;
 		zephyr,shell-uart = &uart2;
 	};
@@ -96,4 +98,22 @@
 
 &wdog0 {
 	status = "okay";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		app_partition: partition@0 {
+			label = "image-0";
+			reg = <0x00000000 0x0001f000>;
+		};
+
+		storage_partition: partition@1f000 {
+			label = "storage";
+			reg = <0x0001f000 0x00001000>;
+		};
+	};
 };

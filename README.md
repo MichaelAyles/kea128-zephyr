@@ -5,10 +5,11 @@ Out-of-tree Zephyr bring-up for NXP Kinetis KEA128 (`SKEAZ1284`) on the TRK-KEA1
 ## Current State
 
 - Custom KEA SoC + TRK-KEA128 board support is implemented.
-- Drivers implemented: GPIO, UART, I2C, SPI, ADC, PWM (FTM), PIT counter, CAN (MSCAN), WDOG.
+- Drivers implemented: GPIO, UART, I2C, SPI, ADC, PWM (FTM), PIT counter, CAN (MSCAN), WDOG, FTMRE Flash.
 - I2C target mode and SPI async callback APIs are implemented.
 - KEA SIM clock-control and pinctrl backends are integrated.
 - Early FEI clock init is aligned to AN4942 nominal 20 MHz bus bring-up.
+- Flash map + fixed storage partition are defined; app includes NVS boot-counter smoke path.
 - Smoke app exercises all major enabled peripherals.
 - Build and flash paths are validated.
 
@@ -65,7 +66,7 @@ Twister build-only coverage for per-driver smoke targets:
 ./scripts/twister.sh
 ```
 
-Current coverage set: 11 build-only scenarios (including `CONFIG_I2C_TARGET` and `CONFIG_SPI_ASYNC` variants).
+Current coverage set: 12 build-only scenarios (including `CONFIG_I2C_TARGET`, `CONFIG_SPI_ASYNC`, and `CONFIG_FLASH` variants).
 
 Equivalent manual build:
 

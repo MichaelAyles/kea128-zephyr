@@ -38,12 +38,14 @@ On boot, confirm these log signatures on UART:
    - `i2c_write probe ret=<n>`
 4. Periodic telemetry:
    - `pit_wrap=<n> adc=<n>`
-5. CAN loopback receive:
+5. NVS boot counter:
+   - `nvs boot_count=<n>`
+6. CAN loopback receive:
    - `CAN RX id=0x123 dlc=1 data0=0x..`
-6. Extended-ID CAN probe:
+7. Extended-ID CAN probe:
    - `can_send ext ret=<n>`
    - `CAN RX id=0x1abcde dlc=1 data0=0x5a`
-7. GPIO interrupt activity (press SW1/SW2):
+8. GPIO interrupt activity (press SW1/SW2):
    - `gpio_irq count=<n> pins=0x........`
 
 Pass criteria:
@@ -53,6 +55,7 @@ Pass criteria:
 - No persistent `... failed: <err>` spam.
 - Button presses increment GPIO IRQ count.
 - CAN RX lines appear while loopback mode is active.
+- NVS boot counter increments after each reset.
 
 ## Subsystem-to-Check Mapping
 
@@ -65,6 +68,7 @@ Pass criteria:
 - SPI: one-shot transceive status line
 - I2C: one-shot write status line
 - WDOG: no reset while feed loop runs
+- Flash/NVS: boot-count line increments on reboot
 
 ## Failure Triage
 

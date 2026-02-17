@@ -17,4 +17,5 @@ supported:
   - pwm
   - counter
   - can
+  - flash
 vendor: nxp

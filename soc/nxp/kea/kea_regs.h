@@ -34,6 +34,7 @@ typedef struct {
 #define KEA_SIM_SCGC_FTM0_MASK (1u << 5)
 #define KEA_SIM_SCGC_FTM1_MASK (1u << 6)
 #define KEA_SIM_SCGC_FTM2_MASK (1u << 7)
+#define KEA_SIM_SCGC_FLASH_MASK (1u << 12)
 #define KEA_SIM_SCGC_MSCAN_MASK (1u << 15)
 #define KEA_SIM_SCGC_I2C0_MASK (1u << 16)
 #define KEA_SIM_SCGC_I2C1_MASK (1u << 17)
@@ -77,6 +78,33 @@ typedef struct {
 #define KEA_ICS_S_IREFST_MASK 0x10u
 #define KEA_ICS_S_LOCK_MASK 0x40u
 #define KEA_ICS_S_LOLS_MASK 0x80u
+
+typedef struct {
+	uint8_t RESERVED_0[1];
+	volatile uint8_t FCCOBIX;
+	volatile uint8_t FSEC;
+	volatile uint8_t FCLKDIV;
+	uint8_t RESERVED_1[1];
+	volatile uint8_t FSTAT;
+	uint8_t RESERVED_2[1];
+	volatile uint8_t FCNFG;
+	volatile uint8_t FCCOBLO;
+	volatile uint8_t FCCOBHI;
+	uint8_t RESERVED_3[1];
+	volatile uint8_t FPROT;
+	uint8_t RESERVED_4[3];
+	volatile uint8_t FOPT;
+} kea_ftmre_t;
+
+#define KEA_FTMRE_BASE 0x40020000u
+#define KEA_FTMRE ((kea_ftmre_t *)KEA_FTMRE_BASE)
+
+#define KEA_FTMRE_FCLKDIV_FDIV_MASK 0x3Fu
+#define KEA_FTMRE_FCLKDIV_FDIVLD_MASK 0x80u
+#define KEA_FTMRE_FSTAT_MGSTAT_MASK 0x03u
+#define KEA_FTMRE_FSTAT_FPVIOL_MASK 0x10u
+#define KEA_FTMRE_FSTAT_ACCERR_MASK 0x20u
+#define KEA_FTMRE_FSTAT_CCIF_MASK 0x80u
 
 typedef struct {
 	volatile uint8_t BDH;

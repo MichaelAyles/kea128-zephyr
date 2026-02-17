@@ -17,7 +17,7 @@ Last updated: 2026-02-17
 - [x] Add repeatable hardware smoke checklist and expected log signatures.
 - [x] Document current pinmux map and validation status.
 - [x] Add Twister build coverage for board + key subsystems (`scripts/twister.sh` + `tests/kea/per_driver_build`).
-- [x] Add minimal per-driver unit/build tests where feasible (11 build-only scenarios, including I2C target + SPI async configs).
+- [x] Add minimal per-driver unit/build tests where feasible (12 build-only scenarios, including I2C target + SPI async + flash configs).
 - [ ] Add package/connector-level pin mapping details.
 
 ### P1: Driver Feature Depth
@@ -31,6 +31,8 @@ Last updated: 2026-02-17
 - [x] SPI async callback path (`transceive_async`, workqueue-backed).
 - [ ] SPI IRQ-driven async engine optimization (optional phase).
 - [x] GPIO migrate KBI gate enable to generic clock control.
+- [x] FTMRE flash driver integrated with Zephyr flash API.
+- [x] Fixed storage partition + NVS boot-counter smoke path integrated.
 
 ### P2: Clock/Power
 
@@ -39,6 +41,7 @@ Last updated: 2026-02-17
 - [x] Runtime bus-rate derivation from ICS/SIM divider registers in clock-control `get_rate`.
 - [ ] Low-power integration and resume-safe peripheral behavior.
 - [ ] Runtime/system PM compatibility validation.
+- [ ] Flash power-fail robustness validation (mid-write reset test cases).
 
 ### P3: Upstream Readiness
 

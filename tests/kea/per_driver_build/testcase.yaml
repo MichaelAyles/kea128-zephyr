@@ -53,3 +53,9 @@ tests:
   kea.per_driver_build.wdt:
     extra_configs:
       - CONFIG_KEA_TEST_WDT=y
+
+  kea.per_driver_build.flash:
+    extra_configs:
+      - CONFIG_KEA_TEST_FLASH=y
+      - CONFIG_FLASH=y
+      - CONFIG_FLASH_MAP=y

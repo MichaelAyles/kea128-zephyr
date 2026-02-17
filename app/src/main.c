@@ -7,12 +7,15 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/can.h>
 #include <zephyr/drivers/counter.h>
+#include <zephyr/drivers/flash.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/watchdog.h>
+#include <zephyr/kvss/nvs.h>
 #include <zephyr/kernel.h>
+#include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 
@@ -71,6 +74,67 @@ static volatile uint32_t pit_wrap_count;
 static volatile gpio_port_pins_t button_events;
 static volatile uint32_t button_irq_count;
 static struct gpio_callback button_callback;
+
+#if defined(CONFIG_NVS) && FIXED_PARTITION_EXISTS(storage_partition)
+#define KEA_NVS_BOOT_COUNT_ID 1u
+
+static void kea_run_nvs_smoke(void)
+{
+	const struct flash_area *storage_area;
+	struct flash_pages_info page_info;
+	struct nvs_fs fs;
+	uint32_t boot_count = 0u;
+	ssize_t rd_len;
+	int ret;
+
+	ret = flash_area_open(FIXED_PARTITION_ID(storage_partition), &storage_area);
+	if (ret != 0) {
+		printk("nvs flash_area_open failed: %d\n", ret);
+		return;
+	}
+
+	ret = flash_get_page_info_by_offs(storage_area->fa_dev, storage_area->fa_off, &page_info);
+	if (ret != 0) {
+		printk("nvs flash_get_page_info_by_offs failed: %d\n", ret);
+		flash_area_close(storage_area);
+		return;
+	}
+
+	fs.flash_device = storage_area->fa_dev;
+	fs.offset = storage_area->fa_off;
+	fs.sector_size = page_info.size;
+	fs.sector_count = storage_area->fa_size / fs.sector_size;
+
+	ret = nvs_mount(&fs);
+	if (ret != 0) {
+		printk("nvs_mount failed: %d\n", ret);
+		flash_area_close(storage_area);
+		return;
+	}
+
+	rd_len = nvs_read(&fs, KEA_NVS_BOOT_COUNT_ID, &boot_count, sizeof(boot_count));
+	if (rd_len < 0 && rd_len != -ENOENT) {
+		printk("nvs_read boot_count failed: %d\n", (int)rd_len);
+		flash_area_close(storage_area);
+		return;
+	}
+
+	if (rd_len == (ssize_t)sizeof(boot_count)) {
+		boot_count++;
+	} else {
+		boot_count = 1u;
+	}
+
+	ret = nvs_write(&fs, KEA_NVS_BOOT_COUNT_ID, &boot_count, sizeof(boot_count));
+	if (ret < 0) {
+		printk("nvs_write boot_count failed: %d\n", ret);
+	} else {
+		printk("nvs boot_count=%u\n", boot_count);
+	}
+
+	flash_area_close(storage_area);
+}
+#endif
 
 static void pit_top_handler(const struct device *dev, void *user_data)
 {
@@ -207,6 +271,10 @@ int main(void)
 	} else {
 		printk("simclk get_rate failed: %d\n", ret);
 	}
+
+#if defined(CONFIG_NVS) && FIXED_PARTITION_EXISTS(storage_partition)
+	kea_run_nvs_smoke();
+#endif
 
 	for (uint32_t pin = 16u; pin <= 19u; pin++) {
 		ret = gpio_pin_configure(gpio, pin, GPIO_OUTPUT_INACTIVE);

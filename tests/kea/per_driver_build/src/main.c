@@ -6,6 +6,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/can.h>
 #include <zephyr/drivers/counter.h>
+#include <zephyr/drivers/flash.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pwm.h>
@@ -13,6 +14,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
+#include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/toolchain.h>
 
@@ -234,6 +236,36 @@ static int __maybe_unused test_wdt(void)
 	return wdt_install_timeout(dev, &cfg);
 }
 
+static int __maybe_unused test_flash(void)
+{
+	const struct device *dev = FIXED_PARTITION_DEVICE(storage_partition);
+	const struct flash_parameters *params;
+	uint64_t flash_size = 0u;
+	uint32_t sample_word = 0u;
+	int ret;
+
+	if (!device_is_ready(dev)) {
+		return -ENODEV;
+	}
+
+	params = flash_get_parameters(dev);
+	if ((params == NULL) || (params->write_block_size == 0u)) {
+		return -EINVAL;
+	}
+
+	ret = flash_get_size(dev, &flash_size);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (flash_size < (FIXED_PARTITION_OFFSET(storage_partition) + sizeof(sample_word))) {
+		return -EINVAL;
+	}
+
+	return flash_read(dev, FIXED_PARTITION_OFFSET(storage_partition), &sample_word,
+			  sizeof(sample_word));
+}
+
 int main(void)
 {
 	int ret;
@@ -256,6 +288,8 @@ int main(void)
 	ret = test_can();
 #elif defined(CONFIG_KEA_TEST_WDT)
 	ret = test_wdt();
+#elif defined(CONFIG_KEA_TEST_FLASH)
+	ret = test_flash();
 #else
 #error "One CONFIG_KEA_TEST_* selector must be enabled."
 #endif

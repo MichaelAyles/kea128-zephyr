@@ -47,7 +47,7 @@ This document is the source of truth for:
   - `soc/nxp/kea/soc.c`
 - Added FEI bus-clock initialization sequence (AN4942-aligned) in early init:
   - `soc/nxp/kea/soc.c`
-- Added register map for SIM/UART/ADC/PIT/FTM/MSCAN/I2C/SPI/KBI/GPIO/WDOG:
+- Added register map for SIM/UART/ADC/PIT/FTM/MSCAN/I2C/SPI/KBI/GPIO/WDOG/FTMRE:
   - `soc/nxp/kea/kea_regs.h`
 - Added board definition for TRK-KEA128:
   - `boards/nxp/trk_kea128/*`
@@ -88,6 +88,7 @@ All below are implemented in `soc/nxp/kea/drivers/`:
 - `counter_kea_pit.c`
 - `can_kea_mscan.c`
 - `wdt_kea.c`
+- `flash_kea_ftmre.c`
 
 ### 2.6 Application-Level Smoke Test
 
@@ -102,6 +103,7 @@ All below are implemented in `soc/nxp/kea/drivers/`:
 - I2C one-shot probe
 - WDOG setup/feed
 - UART console output
+- NVS boot-counter update in fixed `storage_partition`
 
 ### 2.7 Build and Flash Validation
 
@@ -114,7 +116,7 @@ Confirmed on 2026-02-17:
 
 - Twister build-only driver coverage passes for `trk_kea128/skeaz1284`:
   - `./scripts/twister.sh`
-  - Test suite: `tests/kea/per_driver_build` (11 scenarios)
+  - Test suite: `tests/kea/per_driver_build` (12 scenarios)
 
 ## 3) Current Architecture
 
@@ -131,6 +133,9 @@ Confirmed on 2026-02-17:
 
 - `simclk` node (`nxp,kea-sim-clock`) provides `#clock-cells = <1>`.
 - Peripheral nodes consume clock gates via `clocks = <&simclk MASK>`.
+- `ftmre` node (`nxp,kea-ftmre-flash-controller`) provides internal flash controller device.
+- `flash0` (`soc-nv-flash`) has `erase-block-size = 512` and `write-block-size = 4`.
+- Board DTS defines fixed partitions including `storage_partition` for NVS/EEPROM emulation.
 - `pinctrl` node (`nxp,kea-pinctrl`) encodes SIM `PINSEL/PINSEL1` route bits.
 - Legacy properties (`nxp,clock-gate-mask`, `nxp,pinsel*`) remain in bindings as deprecated compatibility fields.
 
@@ -329,6 +334,23 @@ Known gaps:
 - No callback mode (reset-only flow).
 - No non-zero minimum window support.
 
+### 4.12 Flash (FTMRE) (`flash_kea_ftmre.c`)
+
+Implemented:
+
+- Internal flash driver using FTMRE command engine (erase sector + program longword).
+- Full Zephyr flash API path:
+  - `read`, `write`, `erase`, `get_size`, `get_parameters`
+  - page layout support for 512-byte sectors.
+- Flash controller init configures FTMRE clock divider for ~1 MHz operation.
+- Board-level fixed partition map with `storage_partition`.
+- NVS integration path used by app smoke flow to emulate EEPROM-like key/value updates.
+
+Known gaps:
+
+- Power-fail stress validation still pending (mid-write reset campaigns).
+- No wear-level policy tuning beyond baseline NVS behavior.
+
 ## 5) Application Validation Behavior
 
 `app/src/main.c` currently validates:
@@ -343,7 +365,8 @@ Known gaps:
 8. One-time CAN extended-ID probe frame (`0x1abcde`) and receive path.
 9. One-time SPI transceive and I2C write probe.
 10. WDOG setup + periodic feed.
-11. Continuous console logging over UART2.
+11. NVS mount/read/write boot counter in fixed `storage_partition`.
+12. Continuous console logging over UART2.
 
 This is a smoke test, not a compliance test suite.
 
@@ -407,8 +430,7 @@ JLINK_DEVICE="S9KEAZ128xxxx" ./scripts/flash.sh
 ### P2: Clock/Power and Robustness
 
 - Add ICS/clock-tree model for configurable CPU/bus frequencies.
-- Add flash-controller + flash driver support to unlock internal flash-backed
-  NVS/settings (EEPROM emulation).
+- Add power-fail robustness validation for flash/NVS emulation flow.
 - Add low-power state integration and resume-safe peripheral behavior.
 - Add runtime/system power management compatibility checks.
 
@@ -442,7 +464,8 @@ Minimum bar:
 
 - Board boots reliably.
 - UART console stable.
-- GPIO, I2C, SPI, ADC, PWM, PIT, CAN, and WDOG each have at least one validated functional path.
+- GPIO, I2C, SPI, ADC, PWM, PIT, CAN, WDOG, and flash each have at least one validated functional path.
+- Internal flash-backed NVS path is operational for EEPROM-style data persistence.
 - Core known limitations are documented in bindings/docs.
 - Build and flash instructions are reproducible.
 - Patch set is split so maintainers can review by subsystem.

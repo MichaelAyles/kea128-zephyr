@@ -34,9 +34,19 @@
 			status = "okay";
 		};
 
-		flash0: flash@0 {
-			compatible = "soc-nv-flash";
-			reg = <0x00000000 0x00020000>;
+		ftmre: flash-controller@40020000 {
+			compatible = "nxp,kea-ftmre-flash-controller";
+			reg = <0x40020000 0x10>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			status = "okay";
+
+			flash0: flash@0 {
+				compatible = "soc-nv-flash";
+				reg = <0x00000000 0x00020000>;
+				erase-block-size = <512>;
+				write-block-size = <4>;
+			};
 		};
 
 		sram0: memory@1ffff000 {
