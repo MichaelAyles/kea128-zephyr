@@ -1,6 +1,9 @@
 /dts-v1/;
 
 #include <nxp/kea/nxp_skeaz1284.dtsi>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
 
 / {
 	model = "NXP TRK-KEA128";
@@ -13,18 +16,105 @@
 		zephyr,code-partition = &app_partition;
 		zephyr,console = &uart2;
 		zephyr,shell-uart = &uart2;
+		zephyr,canbus = &can0;
 	};
 
 	aliases {
+		led0 = &user_led0;
+		led1 = &user_led1;
+		led2 = &user_led2;
+		led3 = &user_led3;
+		sw0 = &user_sw0;
+		sw1 = &user_sw1;
+		pwm-led0 = &user_pwm_led0;
+		pwm-led1 = &user_pwm_led1;
+		pwm-led2 = &user_pwm_led2;
+		pwm-led3 = &user_pwm_led3;
 		gpio-0 = &gpioa;
 		uart-0 = &uart2;
+		uart0 = &uart2;
 		i2c-0 = &i2c0;
+		i2c0 = &i2c0;
 		spi-0 = &spi0;
+		spi0 = &spi0;
 		adc-0 = &adc0;
+		adc0 = &adc0;
 		pwm-0 = &pwm2;
+		pwm0 = &pwm2;
 		counter-0 = &pit0;
 		can-0 = &can0;
+		can0 = &can0;
 		watchdog0 = &wdog0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		user_led0: led_0 {
+			/* PTC0 */
+			gpios = <&gpioa 16 GPIO_ACTIVE_HIGH>;
+			label = "TRK LED0";
+		};
+
+		user_led1: led_1 {
+			/* PTC1 */
+			gpios = <&gpioa 17 GPIO_ACTIVE_HIGH>;
+			label = "TRK LED1";
+		};
+
+		user_led2: led_2 {
+			/* PTC2 */
+			gpios = <&gpioa 18 GPIO_ACTIVE_HIGH>;
+			label = "TRK LED2";
+		};
+
+		user_led3: led_3 {
+			/* PTC3 */
+			gpios = <&gpioa 19 GPIO_ACTIVE_HIGH>;
+			label = "TRK LED3";
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+
+		user_sw0: button_0 {
+			/* PTD0 / SW1 */
+			gpios = <&gpioa 24 GPIO_ACTIVE_LOW>;
+			label = "TRK SW0";
+			zephyr,code = <INPUT_KEY_0>;
+		};
+
+		user_sw1: button_1 {
+			/* PTD1 / SW2 */
+			gpios = <&gpioa 25 GPIO_ACTIVE_LOW>;
+			label = "TRK SW1";
+			zephyr,code = <INPUT_KEY_1>;
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		user_pwm_led0: pwm_led_0 {
+			pwms = <&pwm2 0 PWM_USEC(20000) PWM_POLARITY_NORMAL>;
+			label = "TRK PWM LED0";
+		};
+
+		user_pwm_led1: pwm_led_1 {
+			pwms = <&pwm2 1 PWM_USEC(20000) PWM_POLARITY_NORMAL>;
+			label = "TRK PWM LED1";
+		};
+
+		user_pwm_led2: pwm_led_2 {
+			pwms = <&pwm2 2 PWM_USEC(20000) PWM_POLARITY_NORMAL>;
+			label = "TRK PWM LED2";
+		};
+
+		user_pwm_led3: pwm_led_3 {
+			pwms = <&pwm2 3 PWM_USEC(20000) PWM_POLARITY_NORMAL>;
+			label = "TRK PWM LED3";
+		};
 	};
 };
 
@@ -78,6 +168,14 @@
 
 &adc0 {
 	status = "okay";
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_VDD_1";
+		zephyr,acquisition-time = <0>;
+		zephyr,resolution = <12>;
+	};
 };
 
 &pwm2 {

@@ -1,5 +1,6 @@
 zephyr_include_directories(.)
 zephyr_sources(soc.c)
+zephyr_sources(flash_configuration.c)
 zephyr_sources_ifdef(CONFIG_CLOCK_CONTROL_KEA_SIM drivers/clock_control_kea_sim.c)
 zephyr_sources_ifdef(CONFIG_PINCTRL_KEA drivers/pinctrl_kea.c)
 zephyr_sources_ifdef(CONFIG_UART_KEA drivers/uart_kea.c)
@@ -12,4 +13,9 @@ zephyr_sources_ifdef(CONFIG_COUNTER_KEA_PIT drivers/counter_kea_pit.c)
 zephyr_sources_ifdef(CONFIG_CAN_KEA_MSCAN drivers/can_kea_mscan.c)
 zephyr_sources_ifdef(CONFIG_WDT_KEA drivers/wdt_kea.c)
 zephyr_sources_ifdef(CONFIG_FLASH_KEA_FTMRE drivers/flash_kea_ftmre.c)
+zephyr_linker_sources(
+  ROM_START
+  SORT_KEY 0x400
+  flash_config.ld
+)
 set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/include/zephyr/arch/arm/cortex_m/scripts/linker.ld CACHE INTERNAL "")
