@@ -18,5 +18,17 @@ properties:
     required: true
     description: Peripheral bus clock frequency in Hz
 
+  nxp,fll-clock-frequency:
+    type: int
+    description: >
+      Internal FLL output clock in Hz used as the root clock for runtime
+      bus-rate derivation.
+
+  nxp,derive-rate-from-dividers:
+    type: boolean
+    description: >
+      If present, derive bus rate from ICS and SIM divider registers at
+      runtime instead of returning a fixed clock-frequency value.
+
 clock-cells:
   - bits

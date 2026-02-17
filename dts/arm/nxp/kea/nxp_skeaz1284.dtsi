@@ -28,6 +28,8 @@
 			compatible = "nxp,kea-sim-clock";
 			reg = <0x40048000 0x28>;
 			clock-frequency = <20971520>;
+			nxp,fll-clock-frequency = <20971520>;
+			nxp,derive-rate-from-dividers;
 			#clock-cells = <1>;
 			status = "okay";
 		};

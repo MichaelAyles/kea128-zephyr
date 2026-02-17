@@ -35,6 +35,7 @@ Last updated: 2026-02-17
 ### P2: Clock/Power
 
 - [ ] ICS/clock-tree integration.
+- [x] Runtime bus-rate derivation from ICS/SIM divider registers in clock-control `get_rate`.
 - [ ] Low-power integration and resume-safe peripheral behavior.
 - [ ] Runtime/system PM compatibility validation.
 

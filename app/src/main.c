@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/can.h>
 #include <zephyr/drivers/counter.h>
@@ -23,6 +24,7 @@
 #define COUNTER_NODE DT_ALIAS(counter_0)
 #define CAN_NODE DT_ALIAS(can_0)
 #define WDT_NODE DT_ALIAS(watchdog0)
+#define SIMCLK_NODE DT_NODELABEL(simclk)
 
 #if !DT_NODE_HAS_STATUS(GPIO_NODE, okay)
 #error "gpio-0 alias is not defined"
@@ -54,6 +56,10 @@
 
 #if !DT_NODE_HAS_STATUS(WDT_NODE, okay)
 #error "watchdog0 alias is not defined"
+#endif
+
+#if !DT_NODE_HAS_STATUS(SIMCLK_NODE, okay)
+#error "simclk node is not defined"
 #endif
 
 #define LED_MASK (BIT(16) | BIT(17) | BIT(18) | BIT(19))
@@ -112,6 +118,7 @@ int main(void)
 	const struct device *counter = DEVICE_DT_GET(COUNTER_NODE);
 	const struct device *can = DEVICE_DT_GET(CAN_NODE);
 	const struct device *wdt = DEVICE_DT_GET(WDT_NODE);
+	const struct device *simclk = DEVICE_DT_GET(SIMCLK_NODE);
 	struct adc_channel_cfg adc_ch_cfg = {
 		.gain = ADC_GAIN_1,
 		.reference = ADC_REF_VDD_1,
@@ -183,14 +190,22 @@ int main(void)
 	bool did_bus_probe = false;
 	bool did_can_ext_probe = false;
 	uint32_t last_button_irq_count = 0u;
+	uint32_t bus_clock_hz = 0u;
 
 	printk("TRK-KEA128 peripheral bring-up\n");
 
 	if (!device_is_ready(gpio) || !device_is_ready(i2c) || !device_is_ready(spi) ||
 	    !device_is_ready(adc) || !device_is_ready(pwm) || !device_is_ready(counter) ||
-	    !device_is_ready(can) || !device_is_ready(wdt)) {
+	    !device_is_ready(can) || !device_is_ready(wdt) || !device_is_ready(simclk)) {
 		printk("A required device is not ready\n");
 		return -ENODEV;
+	}
+
+	ret = clock_control_get_rate(simclk, (clock_control_subsys_t)0, &bus_clock_hz);
+	if (ret == 0) {
+		printk("simclk bus_hz=%u\n", bus_clock_hz);
+	} else {
+		printk("simclk get_rate failed: %d\n", ret);
 	}
 
 	for (uint32_t pin = 16u; pin <= 19u; pin++) {

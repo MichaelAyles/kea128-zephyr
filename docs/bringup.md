@@ -156,13 +156,14 @@ Supported overrides:
 Implemented:
 
 - Gate on/off via SIM `SCGC` bitmask (`clock_control_on/off`).
-- `get_rate` returns configured bus clock.
+- `get_rate` supports runtime bus-rate derivation from `ICS` + `SIM->CLKDIV`
+  when enabled in Devicetree.
 - `get_status` checks current gate state.
 
 Known gaps:
 
-- No dynamic clock-tree management.
-- No ICS integration or runtime frequency switching policy.
+- No runtime frequency switching policy.
+- No generalized system/core/bus/flash clock API split yet.
 
 ### 4.2 Pinctrl (`pinctrl_kea.c`)
 
@@ -403,6 +404,8 @@ JLINK_DEVICE="S9KEAZ128xxxx" ./scripts/flash.sh
 ### P2: Clock/Power and Robustness
 
 - Add ICS/clock-tree model for configurable CPU/bus frequencies.
+- Add flash-controller + flash driver support to unlock internal flash-backed
+  NVS/settings (EEPROM emulation).
 - Add low-power state integration and resume-safe peripheral behavior.
 - Add runtime/system power management compatibility checks.
 

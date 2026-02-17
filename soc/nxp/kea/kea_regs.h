@@ -22,6 +22,12 @@ typedef struct {
 
 #define KEA_SIM_BASE 0x40048000u
 #define KEA_SIM ((kea_sim_t *)KEA_SIM_BASE)
+#define KEA_SIM_CLKDIV_OUTDIV3_MASK (1u << 20)
+#define KEA_SIM_CLKDIV_OUTDIV3_SHIFT 20u
+#define KEA_SIM_CLKDIV_OUTDIV2_MASK (1u << 24)
+#define KEA_SIM_CLKDIV_OUTDIV2_SHIFT 24u
+#define KEA_SIM_CLKDIV_OUTDIV1_MASK (3u << 28)
+#define KEA_SIM_CLKDIV_OUTDIV1_SHIFT 28u
 
 /* SIM SCGC clock gates */
 #define KEA_SIM_SCGC_PIT_MASK (1u << 1)
@@ -47,6 +53,24 @@ typedef struct {
 #define KEA_SIM_PINSEL1_MSCANPS_MASK (1u << 16)
 #define KEA_SIM_PINSEL1_I2C1PS_MASK (1u << 10)
 #define KEA_SIM_PINSEL1_SPI1PS_MASK (1u << 11)
+
+typedef struct {
+	volatile uint8_t C1;
+	volatile uint8_t C2;
+	volatile uint8_t C3;
+	volatile uint8_t C4;
+	volatile uint8_t S;
+} kea_ics_t;
+
+#define KEA_ICS_BASE 0x40064000u
+#define KEA_ICS ((kea_ics_t *)KEA_ICS_BASE)
+
+#define KEA_ICS_C1_CLKS_MASK 0xC0u
+#define KEA_ICS_C1_CLKS_SHIFT 6u
+#define KEA_ICS_C2_BDIV_MASK 0xE0u
+#define KEA_ICS_C2_BDIV_SHIFT 5u
+#define KEA_ICS_S_CLKST_MASK 0x0Cu
+#define KEA_ICS_S_CLKST_SHIFT 2u
 
 typedef struct {
 	volatile uint8_t BDH;
