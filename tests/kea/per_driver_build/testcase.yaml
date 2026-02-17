@@ -20,9 +20,19 @@ tests:
     extra_configs:
       - CONFIG_KEA_TEST_I2C=y
 
+  kea.per_driver_build.i2c_target:
+    extra_configs:
+      - CONFIG_KEA_TEST_I2C=y
+      - CONFIG_I2C_TARGET=y
+
   kea.per_driver_build.spi:
     extra_configs:
       - CONFIG_KEA_TEST_SPI=y
+
+  kea.per_driver_build.spi_async:
+    extra_configs:
+      - CONFIG_KEA_TEST_SPI=y
+      - CONFIG_SPI_ASYNC=y
 
   kea.per_driver_build.adc:
     extra_configs:

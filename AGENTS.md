@@ -77,6 +77,6 @@ Do not treat this repository itself as the direct upstream PR branch.
 ## Priority Order for New Work
 
 1. Keep current peripherals stable and documented.
-2. Close known driver API gaps (CAN extended IDs, I2C target mode, SPI CS/async, GPIO IRQ coverage).
+2. Deepen validation and remaining API polish (I2C target cross-board validation, SPI IRQ async optimization, GPIO IRQ coverage).
 3. Add clock-tree/power-management depth.
 4. Split and polish for upstream acceptance.

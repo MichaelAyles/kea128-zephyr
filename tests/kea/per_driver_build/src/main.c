@@ -16,6 +16,75 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/toolchain.h>
 
+#if defined(CONFIG_I2C_TARGET)
+static int __maybe_unused kea_test_i2c_target_write_requested(struct i2c_target_config *config)
+{
+	ARG_UNUSED(config);
+	return 0;
+}
+
+static int __maybe_unused kea_test_i2c_target_read_requested(struct i2c_target_config *config,
+							      uint8_t *val)
+{
+	ARG_UNUSED(config);
+	*val = 0u;
+	return 0;
+}
+
+static int __maybe_unused kea_test_i2c_target_write_received(struct i2c_target_config *config,
+							     uint8_t val)
+{
+	ARG_UNUSED(config);
+	ARG_UNUSED(val);
+	return 0;
+}
+
+static int __maybe_unused kea_test_i2c_target_read_processed(struct i2c_target_config *config,
+							      uint8_t *val)
+{
+	ARG_UNUSED(config);
+	*val = 0u;
+	return 0;
+}
+
+static int __maybe_unused kea_test_i2c_target_stop(struct i2c_target_config *config)
+{
+	ARG_UNUSED(config);
+	return 0;
+}
+
+static void __maybe_unused kea_test_i2c_target_error(struct i2c_target_config *config,
+						      enum i2c_error_reason error_code)
+{
+	ARG_UNUSED(config);
+	ARG_UNUSED(error_code);
+}
+
+static const struct i2c_target_callbacks kea_test_i2c_target_callbacks = {
+	.write_requested = kea_test_i2c_target_write_requested,
+	.read_requested = kea_test_i2c_target_read_requested,
+	.write_received = kea_test_i2c_target_write_received,
+	.read_processed = kea_test_i2c_target_read_processed,
+	.stop = kea_test_i2c_target_stop,
+	.error = kea_test_i2c_target_error,
+};
+
+static struct i2c_target_config kea_test_i2c_target_cfg = {
+	.flags = 0u,
+	.address = 0x2Au,
+	.callbacks = &kea_test_i2c_target_callbacks,
+};
+#endif
+
+#if defined(CONFIG_SPI_ASYNC)
+static void __maybe_unused kea_test_spi_async_cb(const struct device *dev, int status, void *user_data)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(status);
+	ARG_UNUSED(user_data);
+}
+#endif
+
 static int __maybe_unused test_gpio(void)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_ALIAS(gpio_0));
@@ -44,12 +113,25 @@ static int __maybe_unused test_i2c(void)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_ALIAS(i2c_0));
 	uint32_t cfg;
+	int ret;
 
 	if (!device_is_ready(dev)) {
 		return -ENODEV;
 	}
 
-	return i2c_get_config(dev, &cfg);
+	ret = i2c_get_config(dev, &cfg);
+	if (ret != 0) {
+		return ret;
+	}
+
+#if defined(CONFIG_I2C_TARGET)
+	ret = i2c_target_register(dev, &kea_test_i2c_target_cfg);
+	if (ret == 0) {
+		(void)i2c_target_unregister(dev, &kea_test_i2c_target_cfg);
+	}
+#endif
+
+	return ret;
 }
 
 static int __maybe_unused test_spi(void)
@@ -67,6 +149,15 @@ static int __maybe_unused test_spi(void)
 	if (!device_is_ready(dev)) {
 		return -ENODEV;
 	}
+
+#if defined(CONFIG_SPI_ASYNC)
+	int ret;
+
+	ret = spi_transceive_cb(dev, &cfg, NULL, NULL, kea_test_spi_async_cb, NULL);
+	if (ret != 0) {
+		return ret;
+	}
+#endif
 
 	return spi_release(dev, &cfg);
 }

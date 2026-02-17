@@ -278,11 +278,14 @@ typedef struct {
 #define KEA_I2C_C1_TXAK_MASK 0x08u
 #define KEA_I2C_C1_TX_MASK 0x10u
 #define KEA_I2C_C1_MST_MASK 0x20u
+#define KEA_I2C_C1_IICIE_MASK 0x40u
 #define KEA_I2C_C1_IICEN_MASK 0x80u
 #define KEA_I2C_S_RXAK_MASK 0x01u
 #define KEA_I2C_S_IICIF_MASK 0x02u
+#define KEA_I2C_S_SRW_MASK 0x04u
 #define KEA_I2C_S_ARBL_MASK 0x10u
 #define KEA_I2C_S_BUSY_MASK 0x20u
+#define KEA_I2C_S_IAAS_MASK 0x40u
 
 typedef struct {
 	volatile uint8_t C1;

@@ -30,6 +30,16 @@ struct kea_spi_config {
 
 struct kea_spi_data {
 	struct k_mutex lock;
+#ifdef CONFIG_SPI_ASYNC
+	struct k_work async_work;
+	const struct device *async_dev;
+	const struct spi_config *async_cfg;
+	const struct spi_buf_set *async_tx_bufs;
+	const struct spi_buf_set *async_rx_bufs;
+	spi_callback_t async_cb;
+	void *async_user_data;
+	bool async_in_progress;
+#endif
 };
 
 struct kea_spi_cursor {
@@ -195,9 +205,9 @@ static int kea_spi_apply_config(const struct device *dev, const struct spi_confi
 	return 0;
 }
 
-static int kea_spi_transceive(const struct device *dev, const struct spi_config *spi_cfg,
-			      const struct spi_buf_set *tx_bufs,
-			      const struct spi_buf_set *rx_bufs)
+static int kea_spi_transceive_impl(const struct device *dev, const struct spi_config *spi_cfg,
+				   const struct spi_buf_set *tx_bufs,
+				   const struct spi_buf_set *rx_bufs, bool async_context)
 {
 	const struct kea_spi_config *cfg = dev->config;
 	struct kea_spi_data *data = dev->data;
@@ -219,6 +229,13 @@ static int kea_spi_transceive(const struct device *dev, const struct spi_config 
 	}
 
 	k_mutex_lock(&data->lock, K_FOREVER);
+
+#ifdef CONFIG_SPI_ASYNC
+	if (data->async_in_progress && !async_context) {
+		k_mutex_unlock(&data->lock);
+		return -EBUSY;
+	}
+#endif
 
 	ret = kea_spi_apply_config(dev, spi_cfg);
 	if (ret != 0) {
@@ -272,10 +289,100 @@ static int kea_spi_transceive(const struct device *dev, const struct spi_config 
 	return 0;
 }
 
+static int kea_spi_transceive(const struct device *dev, const struct spi_config *spi_cfg,
+			      const struct spi_buf_set *tx_bufs,
+			      const struct spi_buf_set *rx_bufs)
+{
+	return kea_spi_transceive_impl(dev, spi_cfg, tx_bufs, rx_bufs, false);
+}
+
+#ifdef CONFIG_SPI_ASYNC
+static void kea_spi_async_work_handler(struct k_work *work)
+{
+	struct kea_spi_data *data = CONTAINER_OF(work, struct kea_spi_data, async_work);
+	const struct device *dev;
+	const struct spi_config *spi_cfg;
+	const struct spi_buf_set *tx_bufs;
+	const struct spi_buf_set *rx_bufs;
+	spi_callback_t cb;
+	void *cb_data;
+	int ret;
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+	dev = data->async_dev;
+	spi_cfg = data->async_cfg;
+	tx_bufs = data->async_tx_bufs;
+	rx_bufs = data->async_rx_bufs;
+	k_mutex_unlock(&data->lock);
+
+	ret = kea_spi_transceive_impl(dev, spi_cfg, tx_bufs, rx_bufs, true);
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+	cb = data->async_cb;
+	cb_data = data->async_user_data;
+	data->async_dev = NULL;
+	data->async_cfg = NULL;
+	data->async_tx_bufs = NULL;
+	data->async_rx_bufs = NULL;
+	data->async_cb = NULL;
+	data->async_user_data = NULL;
+	data->async_in_progress = false;
+	k_mutex_unlock(&data->lock);
+
+	if (cb != NULL) {
+		cb(dev, ret, cb_data);
+	}
+}
+
+static int kea_spi_transceive_async(const struct device *dev, const struct spi_config *spi_cfg,
+				    const struct spi_buf_set *tx_bufs,
+				    const struct spi_buf_set *rx_bufs, spi_callback_t cb,
+				    void *userdata)
+{
+	struct kea_spi_data *data = dev->data;
+
+	if (cb == NULL) {
+		return -EINVAL;
+	}
+
+	if ((tx_bufs == NULL) && (rx_bufs == NULL)) {
+		cb(dev, 0, userdata);
+		return 0;
+	}
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+	if (data->async_in_progress) {
+		k_mutex_unlock(&data->lock);
+		return -EBUSY;
+	}
+
+	data->async_dev = dev;
+	data->async_cfg = spi_cfg;
+	data->async_tx_bufs = tx_bufs;
+	data->async_rx_bufs = rx_bufs;
+	data->async_cb = cb;
+	data->async_user_data = userdata;
+	data->async_in_progress = true;
+	k_work_submit(&data->async_work);
+	k_mutex_unlock(&data->lock);
+
+	return 0;
+}
+#endif /* CONFIG_SPI_ASYNC */
+
 static int kea_spi_release(const struct device *dev, const struct spi_config *spi_cfg)
 {
-	ARG_UNUSED(dev);
+	struct kea_spi_data *data = dev->data;
 	ARG_UNUSED(spi_cfg);
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+#ifdef CONFIG_SPI_ASYNC
+	if (data->async_in_progress) {
+		k_mutex_unlock(&data->lock);
+		return -EBUSY;
+	}
+#endif
+	k_mutex_unlock(&data->lock);
 
 	return 0;
 }
@@ -287,6 +394,16 @@ static int kea_spi_init(const struct device *dev)
 	int ret;
 
 	k_mutex_init(&data->lock);
+#ifdef CONFIG_SPI_ASYNC
+	data->async_dev = NULL;
+	data->async_cfg = NULL;
+	data->async_tx_bufs = NULL;
+	data->async_rx_bufs = NULL;
+	data->async_cb = NULL;
+	data->async_user_data = NULL;
+	data->async_in_progress = false;
+	k_work_init(&data->async_work, kea_spi_async_work_handler);
+#endif
 
 	if (!device_is_ready(cfg->clock_dev)) {
 		return -ENODEV;
@@ -310,6 +427,9 @@ static int kea_spi_init(const struct device *dev)
 
 static DEVICE_API(spi, kea_spi_driver_api) = {
 	.transceive = kea_spi_transceive,
+#ifdef CONFIG_SPI_ASYNC
+	.transceive_async = kea_spi_transceive_async,
+#endif
 	.release = kea_spi_release,
 };
 

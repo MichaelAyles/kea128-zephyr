@@ -17,7 +17,7 @@ Last updated: 2026-02-17
 - [x] Add repeatable hardware smoke checklist and expected log signatures.
 - [x] Document current pinmux map and validation status.
 - [x] Add Twister build coverage for board + key subsystems (`scripts/twister.sh` + `tests/kea/per_driver_build`).
-- [x] Add minimal per-driver unit/build tests where feasible (9 build-only scenarios).
+- [x] Add minimal per-driver unit/build tests where feasible (11 build-only scenarios, including I2C target + SPI async configs).
 - [ ] Add package/connector-level pin mapping details.
 
 ### P1: Driver Feature Depth
@@ -25,9 +25,11 @@ Last updated: 2026-02-17
 - [x] CAN extended ID TX/RX support.
 - [x] CAN improved state/error callback behavior.
 - [x] CAN TX completion semantics via mailbox completion ISR callbacks.
-- [ ] I2C target mode support.
+- [x] I2C target mode support (single-target callback flow + IRQ path).
+- [ ] I2C target mode cross-board hardware validation (external controller/target interactions).
 - [x] SPI GPIO-CS helper path.
-- [ ] SPI async/interrupt path (optional phase).
+- [x] SPI async callback path (`transceive_async`, workqueue-backed).
+- [ ] SPI IRQ-driven async engine optimization (optional phase).
 - [x] GPIO migrate KBI gate enable to generic clock control.
 
 ### P2: Clock/Power

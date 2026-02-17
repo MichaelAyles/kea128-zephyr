@@ -12,6 +12,7 @@
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/irq.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 
@@ -25,11 +26,15 @@ struct kea_i2c_config {
 	const struct device *clock_dev;
 	clock_control_subsys_t clock_subsys;
 	const struct pinctrl_dev_config *pincfg;
+	void (*irq_config_func)(const struct device *dev);
 };
 
 struct kea_i2c_data {
 	uint32_t dev_config;
 	struct k_mutex lock;
+	struct i2c_target_config *target_cfg;
+	bool target_active;
+	bool target_read;
 };
 
 static const uint16_t kea_i2c_scl_div_lut[64] = {
@@ -195,6 +200,135 @@ static int kea_i2c_set_bitrate(const struct device *dev, uint32_t bitrate)
 	return 0;
 }
 
+static void kea_i2c_target_stop(struct kea_i2c_data *data)
+{
+	if ((data->target_cfg != NULL) && data->target_active &&
+	    (data->target_cfg->callbacks != NULL) &&
+	    (data->target_cfg->callbacks->stop != NULL)) {
+		(void)data->target_cfg->callbacks->stop(data->target_cfg);
+	}
+
+	data->target_active = false;
+	data->target_read = false;
+}
+
+static void kea_i2c_target_error(struct kea_i2c_data *data, enum i2c_error_reason reason)
+{
+	if ((data->target_cfg == NULL) || (data->target_cfg->callbacks == NULL) ||
+	    (data->target_cfg->callbacks->error == NULL)) {
+		return;
+	}
+
+	data->target_cfg->callbacks->error(data->target_cfg, reason);
+}
+
+static void kea_i2c_isr(const struct device *dev)
+{
+	const struct kea_i2c_config *cfg = dev->config;
+	struct kea_i2c_data *data = dev->data;
+	struct i2c_target_config *target_cfg = data->target_cfg;
+	uint8_t status = cfg->base->S;
+	uint8_t value = 0xFFu;
+	int ret = 0;
+
+	if (target_cfg == NULL) {
+		cfg->base->S = KEA_I2C_S_IICIF_MASK | KEA_I2C_S_ARBL_MASK;
+		return;
+	}
+
+	if ((status & KEA_I2C_S_ARBL_MASK) != 0u) {
+		cfg->base->S = KEA_I2C_S_ARBL_MASK;
+		kea_i2c_target_error(data, I2C_ERROR_ARBITRATION);
+		kea_i2c_target_stop(data);
+	}
+
+	if ((status & KEA_I2C_S_IICIF_MASK) == 0u) {
+		return;
+	}
+
+	if ((status & KEA_I2C_S_IAAS_MASK) != 0u) {
+		/* Repeated start to this address terminates previous transaction. */
+		if (data->target_active) {
+			kea_i2c_target_stop(data);
+		}
+
+		data->target_active = true;
+		data->target_read = ((status & KEA_I2C_S_SRW_MASK) != 0u);
+
+		if (data->target_read) {
+			cfg->base->C1 |= KEA_I2C_C1_TX_MASK;
+
+			if ((target_cfg->callbacks != NULL) &&
+			    (target_cfg->callbacks->read_requested != NULL)) {
+				ret = target_cfg->callbacks->read_requested(target_cfg, &value);
+			}
+
+			cfg->base->D = value;
+		} else {
+			cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_TX_MASK;
+			(void)cfg->base->D;
+
+			if ((target_cfg->callbacks != NULL) &&
+			    (target_cfg->callbacks->write_requested != NULL)) {
+				ret = target_cfg->callbacks->write_requested(target_cfg);
+			}
+		}
+
+		if (ret < 0) {
+			cfg->base->C1 |= KEA_I2C_C1_TXAK_MASK;
+		} else {
+			cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_TXAK_MASK;
+		}
+
+		cfg->base->S = KEA_I2C_S_IICIF_MASK;
+		return;
+	}
+
+	if (!data->target_active) {
+		cfg->base->S = KEA_I2C_S_IICIF_MASK;
+		return;
+	}
+
+	if (data->target_read) {
+		if ((status & KEA_I2C_S_RXAK_MASK) != 0u) {
+			cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_TX_MASK;
+			kea_i2c_target_stop(data);
+		} else {
+			if ((target_cfg->callbacks != NULL) &&
+			    (target_cfg->callbacks->read_processed != NULL)) {
+				ret = target_cfg->callbacks->read_processed(target_cfg, &value);
+			}
+
+			cfg->base->D = value;
+
+			if (ret < 0) {
+				cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_TX_MASK;
+				kea_i2c_target_stop(data);
+			}
+		}
+	} else {
+		value = cfg->base->D;
+
+		if ((target_cfg->callbacks != NULL) &&
+		    (target_cfg->callbacks->write_received != NULL)) {
+			ret = target_cfg->callbacks->write_received(target_cfg, value);
+		}
+
+		if (ret < 0) {
+			cfg->base->C1 |= KEA_I2C_C1_TXAK_MASK;
+		} else {
+			cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_TXAK_MASK;
+		}
+	}
+
+	if ((cfg->base->S & KEA_I2C_S_BUSY_MASK) == 0u) {
+		cfg->base->C1 &= (uint8_t)~(KEA_I2C_C1_TX_MASK | KEA_I2C_C1_TXAK_MASK);
+		kea_i2c_target_stop(data);
+	}
+
+	cfg->base->S = KEA_I2C_S_IICIF_MASK;
+}
+
 static int kea_i2c_configure(const struct device *dev, uint32_t dev_config)
 {
 	const struct kea_i2c_config *cfg = dev->config;
@@ -221,13 +355,22 @@ static int kea_i2c_configure(const struct device *dev, uint32_t dev_config)
 		return -ENOTSUP;
 	}
 
+	k_mutex_lock(&data->lock, K_FOREVER);
+
+	if (data->target_cfg != NULL) {
+		k_mutex_unlock(&data->lock);
+		return -EBUSY;
+	}
+
 	ret = kea_i2c_set_bitrate(dev, bitrate);
 	if (ret != 0) {
+		k_mutex_unlock(&data->lock);
 		return ret;
 	}
 
 	cfg->base->C1 = KEA_I2C_C1_IICEN_MASK;
 	data->dev_config = dev_config;
+	k_mutex_unlock(&data->lock);
 
 	return 0;
 }
@@ -255,6 +398,11 @@ static int kea_i2c_transfer(const struct device *dev, struct i2c_msg *msgs,
 	}
 
 	k_mutex_lock(&data->lock, K_FOREVER);
+
+	if (data->target_cfg != NULL) {
+		k_mutex_unlock(&data->lock);
+		return -EBUSY;
+	}
 
 	for (uint32_t i = 0; i < num_msgs; i++) {
 		const bool read = (msgs[i].flags & I2C_MSG_READ) != 0u;
@@ -303,18 +451,75 @@ static int kea_i2c_transfer(const struct device *dev, struct i2c_msg *msgs,
 
 static int kea_i2c_target_register(const struct device *dev, struct i2c_target_config *cfg)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(cfg);
+	const struct kea_i2c_config *dev_cfg = dev->config;
+	struct kea_i2c_data *data = dev->data;
+	int ret = 0;
 
-	return -ENOTSUP;
+	if ((cfg == NULL) || (cfg->callbacks == NULL)) {
+		return -EINVAL;
+	}
+
+	if ((cfg->flags & I2C_TARGET_FLAGS_ADDR_10_BITS) != 0u) {
+		return -ENOTSUP;
+	}
+
+	if (cfg->address > 0x7Fu) {
+		return -EINVAL;
+	}
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+
+	if (data->target_cfg != NULL) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	if ((dev_cfg->base->S & KEA_I2C_S_BUSY_MASK) != 0u) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	data->target_cfg = cfg;
+	data->target_active = false;
+	data->target_read = false;
+
+	dev_cfg->base->A1 = (uint8_t)(cfg->address << 1);
+	dev_cfg->base->S = KEA_I2C_S_IICIF_MASK | KEA_I2C_S_ARBL_MASK;
+	dev_cfg->base->C1 = KEA_I2C_C1_IICEN_MASK | KEA_I2C_C1_IICIE_MASK;
+
+out:
+	k_mutex_unlock(&data->lock);
+	return ret;
 }
 
 static int kea_i2c_target_unregister(const struct device *dev, struct i2c_target_config *cfg)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(cfg);
+	const struct kea_i2c_config *dev_cfg = dev->config;
+	struct kea_i2c_data *data = dev->data;
+	int ret = 0;
 
-	return -ENOTSUP;
+	if (cfg == NULL) {
+		return -EINVAL;
+	}
+
+	k_mutex_lock(&data->lock, K_FOREVER);
+
+	if (data->target_cfg != cfg) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	dev_cfg->base->C1 &= (uint8_t)~KEA_I2C_C1_IICIE_MASK;
+	data->target_active = false;
+	data->target_read = false;
+	data->target_cfg = NULL;
+
+	dev_cfg->base->S = KEA_I2C_S_IICIF_MASK | KEA_I2C_S_ARBL_MASK;
+	dev_cfg->base->C1 = KEA_I2C_C1_IICEN_MASK;
+
+out:
+	k_mutex_unlock(&data->lock);
+	return ret;
 }
 
 static int kea_i2c_recover_bus(const struct device *dev)
@@ -334,6 +539,9 @@ static int kea_i2c_init(const struct device *dev)
 	int ret;
 
 	k_mutex_init(&data->lock);
+	data->target_cfg = NULL;
+	data->target_active = false;
+	data->target_read = false;
 
 	if (!device_is_ready(cfg->clock_dev)) {
 		return -ENODEV;
@@ -352,7 +560,16 @@ static int kea_i2c_init(const struct device *dev)
 	cfg->base->C1 = 0u;
 	cfg->base->S = KEA_I2C_S_IICIF_MASK | KEA_I2C_S_ARBL_MASK;
 
-	return kea_i2c_configure(dev, default_cfg);
+	ret = kea_i2c_configure(dev, default_cfg);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (cfg->irq_config_func != NULL) {
+		cfg->irq_config_func(dev);
+	}
+
+	return 0;
 }
 
 static DEVICE_API(i2c, kea_i2c_driver_api) = {
@@ -364,7 +581,16 @@ static DEVICE_API(i2c, kea_i2c_driver_api) = {
 	.recover_bus = kea_i2c_recover_bus,
 };
 
+#define KEA_I2C_IRQ_CONFIG(inst)                                                             \
+	static void kea_i2c_irq_config_##inst(const struct device *dev)                    \
+	{                                                                                     \
+		IRQ_CONNECT(DT_INST_IRQN(inst), DT_INST_IRQ(inst, priority), kea_i2c_isr,   \
+			    DEVICE_DT_INST_GET(inst), 0);                                      \
+		irq_enable(DT_INST_IRQN(inst));                                                 \
+	}
+
 #define KEA_I2C_INIT(inst)                                                                  \
+	KEA_I2C_IRQ_CONFIG(inst)                                                           \
 	PINCTRL_DT_INST_DEFINE(inst);                                                       \
                                                                                                \
 	static const struct kea_i2c_config kea_i2c_cfg_##inst = {                            \
@@ -373,6 +599,7 @@ static DEVICE_API(i2c, kea_i2c_driver_api) = {
 		.clock_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                          \
 		.clock_subsys = (clock_control_subsys_t)DT_INST_CLOCKS_CELL(inst, bits),        \
 		.pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                  \
+		.irq_config_func = kea_i2c_irq_config_##inst,                                   \
 	};                                                                                       \
                                                                                                \
 	static struct kea_i2c_data kea_i2c_data_##inst;                                        \

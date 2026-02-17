@@ -112,7 +112,7 @@ Confirmed on 2026-02-17:
 
 - Twister build-only driver coverage passes for `trk_kea128/skeaz1284`:
   - `./scripts/twister.sh`
-  - Test suite: `tests/kea/per_driver_build` (9 scenarios)
+  - Test suite: `tests/kea/per_driver_build` (11 scenarios)
 
 ## 3) Current Architecture
 
@@ -213,18 +213,20 @@ Known gaps:
 Implemented:
 
 - Controller mode.
+- Target mode registration/unregistration with callback dispatch.
 - 7-bit addressing.
 - Standard (100 kHz) and Fast (400 kHz) support.
 - Multi-message transfer path with restart/stop handling.
 - Bus recover path (basic STOP recovery).
+- IRQ path for target transactions.
 - Clock + pinctrl apply at init.
 
 Known gaps:
 
-- No target/peripheral mode.
 - No 10-bit addressing.
 - No HS mode.
 - No interrupt-driven/async transfer path.
+- Target mode needs cross-board validation against an external controller.
 
 ### 4.6 SPI (`spi_kea.c`)
 
@@ -234,13 +236,14 @@ Implemented:
 - 8-bit word size.
 - CPOL/CPHA and MSB/LSB options.
 - Synchronous transceive with multi-buffer cursor handling.
+- Async callback API path (`transceive_async`, workqueue-backed).
 - GPIO-based CS helper path (`spi_cfg->cs` GPIO) with optional setup delay.
 - Clock + pinctrl apply at init.
 
 Known gaps:
 
 - No slave mode.
-- No async/interrupt/DMA path.
+- No IRQ-driven or DMA-backed transfer engine.
 
 ### 4.7 ADC (`adc_kea.c`)
 
@@ -385,25 +388,16 @@ JLINK_DEVICE="S9KEAZ128xxxx" ./scripts/flash.sh
 
 ### P0: Stabilize and Prove Baseline
 
-- Add repeatable hardware smoke checklist and expected log signatures.
-- Add Twister build coverage for board + key subsystems.
-- Add minimal per-driver unit/build tests where feasible.
 - Remove ambiguity around pin routing by documenting full board mux map and validated pinout.
 
 ### P1: Finish Critical Driver Gaps
 
-- CAN:
-  - Extended-ID TX/RX support.
-  - Better error/state transitions and callback behavior.
-  - Real TX completion semantics.
 - I2C:
-  - Target mode support.
+  - Cross-board validation of target mode behavior.
   - Broader speed and transfer corner-case validation.
 - SPI:
-  - GPIO CS helper integration.
-  - Optional interrupt-driven path.
+  - Optional IRQ-driven async engine.
 - GPIO:
-  - Migrate KBI clock gating to generic `clock_control`.
   - Validate/expand interrupt coverage beyond current mapping assumptions.
 
 ### P2: Clock/Power and Robustness
