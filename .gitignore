@@ -14,6 +14,8 @@ __pycache__/
 # Zephyr / west / build outputs
 build/
 build-*/
+twister-out/
+twister-out.*/
 zephyr/.cache/
 zephyr/build/
 zephyr/

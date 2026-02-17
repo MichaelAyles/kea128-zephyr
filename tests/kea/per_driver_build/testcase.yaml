@@ -1,0 +1,45 @@
+common:
+  tags:
+    - kea
+    - drivers
+    - build
+  build_only: true
+  platform_allow:
+    - trk_kea128/skeaz1284
+
+tests:
+  kea.per_driver_build.gpio:
+    extra_configs:
+      - CONFIG_KEA_TEST_GPIO=y
+
+  kea.per_driver_build.uart:
+    extra_configs:
+      - CONFIG_KEA_TEST_UART=y
+
+  kea.per_driver_build.i2c:
+    extra_configs:
+      - CONFIG_KEA_TEST_I2C=y
+
+  kea.per_driver_build.spi:
+    extra_configs:
+      - CONFIG_KEA_TEST_SPI=y
+
+  kea.per_driver_build.adc:
+    extra_configs:
+      - CONFIG_KEA_TEST_ADC=y
+
+  kea.per_driver_build.pwm:
+    extra_configs:
+      - CONFIG_KEA_TEST_PWM=y
+
+  kea.per_driver_build.counter:
+    extra_configs:
+      - CONFIG_KEA_TEST_COUNTER=y
+
+  kea.per_driver_build.can:
+    extra_configs:
+      - CONFIG_KEA_TEST_CAN=y
+
+  kea.per_driver_build.wdt:
+    extra_configs:
+      - CONFIG_KEA_TEST_WDT=y

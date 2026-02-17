@@ -108,6 +108,12 @@ Confirmed on 2026-02-16:
 - `./scripts/build.sh` completes successfully.
 - `./scripts/flash.sh` completes successfully using J-Link runner.
 
+Confirmed on 2026-02-17:
+
+- Twister build-only driver coverage passes for `trk_kea128/skeaz1284`:
+  - `./scripts/twister.sh`
+  - Test suite: `tests/kea/per_driver_build` (9 scenarios)
+
 ## 3) Current Architecture
 
 ### 3.1 High-Level Layout

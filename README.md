@@ -57,6 +57,12 @@ west zephyr-export
 ./scripts/build.sh
 ```
 
+Twister build-only coverage for per-driver smoke targets:
+
+```bash
+./scripts/twister.sh
+```
+
 Equivalent manual build:
 
 ```bash

@@ -1,0 +1,34 @@
+mainmenu "KEA Per-Driver Build Tests"
+
+source "Kconfig.zephyr"
+
+menu "KEA per-driver build test selectors"
+
+config KEA_TEST_GPIO
+	bool "Build GPIO test path"
+
+config KEA_TEST_UART
+	bool "Build UART test path"
+
+config KEA_TEST_I2C
+	bool "Build I2C test path"
+
+config KEA_TEST_SPI
+	bool "Build SPI test path"
+
+config KEA_TEST_ADC
+	bool "Build ADC test path"
+
+config KEA_TEST_PWM
+	bool "Build PWM test path"
+
+config KEA_TEST_COUNTER
+	bool "Build counter test path"
+
+config KEA_TEST_CAN
+	bool "Build CAN test path"
+
+config KEA_TEST_WDT
+	bool "Build watchdog test path"
+
+endmenu

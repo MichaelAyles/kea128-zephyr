@@ -16,8 +16,8 @@ Last updated: 2026-02-17
 
 - [x] Add repeatable hardware smoke checklist and expected log signatures.
 - [x] Document current pinmux map and validation status.
-- [ ] Add Twister build coverage for board + key subsystems.
-- [ ] Add minimal per-driver unit/build tests where feasible.
+- [x] Add Twister build coverage for board + key subsystems (`scripts/twister.sh` + `tests/kea/per_driver_build`).
+- [x] Add minimal per-driver unit/build tests where feasible (9 build-only scenarios).
 - [ ] Add package/connector-level pin mapping details.
 
 ### P1: Driver Feature Depth
