@@ -1,6 +1,12 @@
 # KEA128 Zephyr Bring-up: Implemented State and Roadmap
 
-Last updated: 2026-02-16
+Last updated: 2026-02-17
+
+Companion documents:
+
+- Progress tracker: `docs/progress.md`
+- Hardware smoke checklist: `docs/hardware-smoke.md`
+- Pinmux map and validation matrix: `docs/pinmux-map.md`
 
 ## 1) Scope and Goal
 

@@ -13,10 +13,19 @@ Out-of-tree Zephyr bring-up for NXP Kinetis KEA128 (`SKEAZ1284`) on the TRK-KEA1
 Detailed status, implementation notes, and roadmap:
 
 - `docs/bringup.md`
+- `docs/progress.md`
 
 Research background and upstream context:
 
 - `docs/research.md`
+
+Hardware validation checklist and expected runtime signatures:
+
+- `docs/hardware-smoke.md`
+
+Pinmux/routing map and validation matrix:
+
+- `docs/pinmux-map.md`
 
 ## Repository Layout
 

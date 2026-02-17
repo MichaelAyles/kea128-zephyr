@@ -16,8 +16,11 @@ Primary debug/flash probe:
 
 - Detailed implementation status and roadmap: `docs/bringup.md`
 - Upstream research context: `docs/research.md`
+- Progress tracker: `docs/progress.md`
+- Hardware smoke checklist: `docs/hardware-smoke.md`
+- Pinmux map and validation matrix: `docs/pinmux-map.md`
 
-When behavior or status changes, update `docs/bringup.md` in the same change set.
+When behavior or status changes, update `docs/bringup.md` and `docs/progress.md` in the same change set.
 
 ## Working Principles
 
