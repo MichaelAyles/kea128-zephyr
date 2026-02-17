@@ -4,6 +4,6 @@ config NUM_IRQS
 	default 32
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
-	default 20971520
+	default 20000000
 
 endif

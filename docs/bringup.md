@@ -45,6 +45,8 @@ This document is the source of truth for:
   - `soc/nxp/kea/soc.yml`
 - Added early SoC init hook to disable watchdog during bring-up:
   - `soc/nxp/kea/soc.c`
+- Added FEI bus-clock initialization sequence (AN4942-aligned) in early init:
+  - `soc/nxp/kea/soc.c`
 - Added register map for SIM/UART/ADC/PIT/FTM/MSCAN/I2C/SPI/KBI/GPIO/WDOG:
   - `soc/nxp/kea/kea_regs.h`
 - Added board definition for TRK-KEA128:
@@ -158,6 +160,7 @@ Implemented:
 - Gate on/off via SIM `SCGC` bitmask (`clock_control_on/off`).
 - `get_rate` supports runtime bus-rate derivation from `ICS` + `SIM->CLKDIV`
   when enabled in Devicetree.
+- AN4942-style FEI setup in early boot for nominal 20 MHz bus operation.
 - `get_status` checks current gate state.
 
 Known gaps:

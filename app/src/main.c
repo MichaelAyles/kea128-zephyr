@@ -133,7 +133,7 @@ int main(void)
 		.resolution = 12,
 	};
 	struct counter_top_cfg pit_top_cfg = {
-		.ticks = 2097152,
+		.ticks = 2000000,
 		.callback = pit_top_handler,
 		.user_data = NULL,
 		.flags = 0,

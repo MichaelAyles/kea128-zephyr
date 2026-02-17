@@ -8,6 +8,7 @@ Out-of-tree Zephyr bring-up for NXP Kinetis KEA128 (`SKEAZ1284`) on the TRK-KEA1
 - Drivers implemented: GPIO, UART, I2C, SPI, ADC, PWM (FTM), PIT counter, CAN (MSCAN), WDOG.
 - I2C target mode and SPI async callback APIs are implemented.
 - KEA SIM clock-control and pinctrl backends are integrated.
+- Early FEI clock init is aligned to AN4942 nominal 20 MHz bus bring-up.
 - Smoke app exercises all major enabled peripherals.
 - Build and flash paths are validated.
 

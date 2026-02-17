@@ -65,12 +65,18 @@ typedef struct {
 #define KEA_ICS_BASE 0x40064000u
 #define KEA_ICS ((kea_ics_t *)KEA_ICS_BASE)
 
+#define KEA_ICS_C1_IRCLKEN_MASK 0x02u
+#define KEA_ICS_C1_IREFS_MASK 0x04u
 #define KEA_ICS_C1_CLKS_MASK 0xC0u
 #define KEA_ICS_C1_CLKS_SHIFT 6u
 #define KEA_ICS_C2_BDIV_MASK 0xE0u
 #define KEA_ICS_C2_BDIV_SHIFT 5u
+#define KEA_ICS_C3_SCTRIM_MASK 0xFFu
 #define KEA_ICS_S_CLKST_MASK 0x0Cu
 #define KEA_ICS_S_CLKST_SHIFT 2u
+#define KEA_ICS_S_IREFST_MASK 0x10u
+#define KEA_ICS_S_LOCK_MASK 0x40u
+#define KEA_ICS_S_LOLS_MASK 0x80u
 
 typedef struct {
 	volatile uint8_t BDH;
