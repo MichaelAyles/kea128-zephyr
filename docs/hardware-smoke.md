@@ -40,7 +40,10 @@ On boot, confirm these log signatures on UART:
    - `pit_wrap=<n> adc=<n>`
 5. CAN loopback receive:
    - `CAN RX id=0x123 dlc=1 data0=0x..`
-6. GPIO interrupt activity (press SW1/SW2):
+6. Extended-ID CAN probe:
+   - `can_send ext ret=<n>`
+   - `CAN RX id=0x1abcde dlc=1 data0=0x5a`
+7. GPIO interrupt activity (press SW1/SW2):
    - `gpio_irq count=<n> pins=0x........`
 
 Pass criteria:

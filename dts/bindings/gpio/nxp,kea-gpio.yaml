@@ -9,6 +9,11 @@ properties:
     type: array
     required: true
 
+  clocks:
+    type: phandle-array
+    required: false
+    description: Optional KBI clock controller phandle and gate mask
+
   interrupts:
     type: array
     required: false

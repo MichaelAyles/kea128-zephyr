@@ -10,6 +10,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/kernel.h>
@@ -99,6 +100,39 @@ static int kea_spi_wait_flag(volatile uint8_t *reg, uint8_t mask)
 	return -ETIMEDOUT;
 }
 
+static int kea_spi_cs_prepare(const struct spi_config *spi_cfg)
+{
+	if ((!spi_cfg->cs.cs_is_gpio) || (spi_cfg->cs.gpio.port == NULL)) {
+		return 0;
+	}
+
+	if (!device_is_ready(spi_cfg->cs.gpio.port)) {
+		return -ENODEV;
+	}
+
+	return gpio_pin_configure_dt(&spi_cfg->cs.gpio, GPIO_OUTPUT_INACTIVE);
+}
+
+static int kea_spi_cs_set(const struct spi_config *spi_cfg, bool active)
+{
+	int ret;
+
+	if ((!spi_cfg->cs.cs_is_gpio) || (spi_cfg->cs.gpio.port == NULL)) {
+		return 0;
+	}
+
+	ret = gpio_pin_set_dt(&spi_cfg->cs.gpio, active ? 1 : 0);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (spi_cfg->cs.delay > 0u) {
+		k_busy_wait((uint32_t)spi_cfg->cs.delay);
+	}
+
+	return 0;
+}
+
 static int kea_spi_apply_config(const struct device *dev, const struct spi_config *spi_cfg)
 {
 	const struct kea_spi_config *cfg = dev->config;
@@ -172,19 +206,27 @@ static int kea_spi_transceive(const struct device *dev, const struct spi_config 
 	size_t tx_len = kea_spi_total_len(tx_bufs);
 	size_t rx_len = kea_spi_total_len(rx_bufs);
 	size_t frames = MAX(tx_len, rx_len);
+	bool use_gpio_cs = (spi_cfg->cs.cs_is_gpio) && (spi_cfg->cs.gpio.port != NULL);
 	int ret;
 
 	if ((tx_bufs == NULL) && (rx_bufs == NULL)) {
 		return 0;
 	}
 
-	if ((spi_cfg->cs.cs_is_gpio) && (spi_cfg->cs.gpio.port != NULL)) {
-		return -ENOTSUP;
+	ret = kea_spi_cs_prepare(spi_cfg);
+	if (ret != 0) {
+		return ret;
 	}
 
 	k_mutex_lock(&data->lock, K_FOREVER);
 
 	ret = kea_spi_apply_config(dev, spi_cfg);
+	if (ret != 0) {
+		k_mutex_unlock(&data->lock);
+		return ret;
+	}
+
+	ret = kea_spi_cs_set(spi_cfg, true);
 	if (ret != 0) {
 		k_mutex_unlock(&data->lock);
 		return ret;
@@ -215,6 +257,10 @@ static int kea_spi_transceive(const struct device *dev, const struct spi_config 
 		if ((rx_bufs != NULL) && (rx_len > 0u)) {
 			(void)kea_spi_cursor_put_byte(&rx_cursor, rx_byte);
 		}
+	}
+
+	if (use_gpio_cs) {
+		(void)kea_spi_cs_set(spi_cfg, false);
 	}
 
 	k_mutex_unlock(&data->lock);

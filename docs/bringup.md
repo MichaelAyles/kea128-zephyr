@@ -185,12 +185,12 @@ Implemented:
 - Callback management.
 - KBI-backed GPIO interrupts on banks with IRQ lines.
 - Supports edge and level mode, high/low trigger selection.
+- KBI gate enable via generic `clock_control` (`clocks` DT property).
 
 Known gaps:
 
 - No pull-up/down or single-ended/open-drain configuration.
 - No wakeup flag support.
-- KBI clock gating still uses direct SIM write (`SIM->SCGC`) in this driver; not yet migrated to `clock_control`.
 - Interrupt source mapping is tied to current KBI/IRQ assumptions and needs matrix validation for full coverage.
 
 ### 4.4 UART (`uart_kea.c`)
@@ -234,11 +234,11 @@ Implemented:
 - 8-bit word size.
 - CPOL/CPHA and MSB/LSB options.
 - Synchronous transceive with multi-buffer cursor handling.
+- GPIO-based CS helper path (`spi_cfg->cs` GPIO) with optional setup delay.
 - Clock + pinctrl apply at init.
 
 Known gaps:
 
-- No GPIO chip-select helper path.
 - No slave mode.
 - No async/interrupt/DMA path.
 
@@ -293,19 +293,18 @@ Known gaps:
 Implemented:
 
 - CAN classic mode support.
-- Standard-ID TX/RX.
+- Standard-ID and extended-ID TX/RX.
 - Loopback/listen-only/3-sample modes.
 - Software RX filter table (`CONFIG_CAN_KEA_MSCAN_MAX_FILTER`).
 - Basic timing setup using `can_calc_timing`.
-- RX/TX IRQ hookup.
+- RX/TX IRQ hookup with TX mailbox completion callbacks from ISR.
+- State-change callback notifications on controller state-change flags.
 - Clock + pinctrl apply at init.
 
 Known gaps:
 
-- No extended-ID frame support.
-- No TX mailbox completion tracking beyond immediate callback.
 - Manual recovery path is stubbed (`-ENOSYS` when enabled).
-- State-change callback storage exists but richer bus-state signaling/error path handling is incomplete.
+- Timeout-aware TX queueing/blocking semantics are still minimal.
 
 ### 4.11 Watchdog (`wdt_kea.c`)
 
@@ -333,10 +332,11 @@ Known gaps:
 4. ADC channel 0 setup + periodic read.
 5. PWM setup on channel 0.
 6. PIT top callback increments a wrap counter.
-7. CAN loopback send/receive on ID `0x123`.
-8. One-time SPI transceive and I2C write probe.
-9. WDOG setup + periodic feed.
-10. Continuous console logging over UART2.
+7. CAN loopback send/receive on standard ID `0x123`.
+8. One-time CAN extended-ID probe frame (`0x1abcde`) and receive path.
+9. One-time SPI transceive and I2C write probe.
+10. WDOG setup + periodic feed.
+11. Continuous console logging over UART2.
 
 This is a smoke test, not a compliance test suite.
 

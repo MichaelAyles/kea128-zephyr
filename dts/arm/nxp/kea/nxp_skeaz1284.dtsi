@@ -46,6 +46,7 @@
 			compatible = "nxp,kea-gpio";
 			reg = <0x400ff000 0x1c>;
 			interrupts = <24 0>;
+			clocks = <&simclk 0x01000000>;
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <32>;
@@ -56,6 +57,7 @@
 			compatible = "nxp,kea-gpio";
 			reg = <0x400ff040 0x1c>;
 			interrupts = <25 0>;
+			clocks = <&simclk 0x02000000>;
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <32>;

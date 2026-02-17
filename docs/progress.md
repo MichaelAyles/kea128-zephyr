@@ -22,13 +22,13 @@ Last updated: 2026-02-17
 
 ### P1: Driver Feature Depth
 
-- [ ] CAN extended ID TX/RX support.
-- [ ] CAN improved state/error callback behavior.
-- [ ] CAN TX completion semantics via mailbox completion path.
+- [x] CAN extended ID TX/RX support.
+- [x] CAN improved state/error callback behavior.
+- [x] CAN TX completion semantics via mailbox completion ISR callbacks.
 - [ ] I2C target mode support.
-- [ ] SPI GPIO-CS helper path.
+- [x] SPI GPIO-CS helper path.
 - [ ] SPI async/interrupt path (optional phase).
-- [ ] GPIO migrate KBI gate enable to generic clock control.
+- [x] GPIO migrate KBI gate enable to generic clock control.
 
 ### P2: Clock/Power
 

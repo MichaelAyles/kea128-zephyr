@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_utils.h>
 #include <zephyr/irq.h>
@@ -18,7 +19,8 @@ struct kea_gpio_config {
 	struct gpio_driver_config common;
 	kea_gpio_t *base;
 	kea_kbi_t *kbi;
-	uint32_t kbi_clock_gate_mask;
+	const struct device *clock_dev;
+	clock_control_subsys_t clock_subsys;
 	void (*irq_config_func)(const struct device *dev);
 };
 
@@ -319,6 +321,7 @@ static int kea_gpio_init(const struct device *dev)
 {
 	const struct kea_gpio_config *cfg = dev->config;
 	struct kea_gpio_data *data = dev->data;
+	int ret;
 
 	sys_slist_init(&data->callbacks);
 	data->int_enabled_mask = 0u;
@@ -327,7 +330,19 @@ static int kea_gpio_init(const struct device *dev)
 	data->int_configured_mask = 0u;
 
 	if (cfg->kbi != NULL) {
-		KEA_SIM->SCGC |= cfg->kbi_clock_gate_mask;
+		if (cfg->clock_dev == NULL) {
+			return -ENODEV;
+		}
+
+		if (!device_is_ready(cfg->clock_dev)) {
+			return -ENODEV;
+		}
+
+		ret = clock_control_on(cfg->clock_dev, cfg->clock_subsys);
+		if (ret != 0) {
+			return ret;
+		}
+
 		cfg->kbi->PE = 0u;
 		cfg->kbi->ES = 0u;
 		cfg->kbi->SC = KEA_KBI_SC_RSTKBSP_MASK | KEA_KBI_SC_KBSPEN_MASK;
@@ -381,12 +396,11 @@ static DEVICE_API(gpio, kea_gpio_driver_api) = {
 				  ? KEA_KBI0                                                   \
 				  : ((DT_INST_IRQN(inst) == 25) ? KEA_KBI1 : NULL))),         \
 			(NULL)),                                                              \
-		.kbi_clock_gate_mask = COND_CODE_1(                                                \
-			DT_INST_IRQ_HAS_IDX(inst, 0),                                             \
-			(((DT_INST_IRQN(inst) == 24)                                             \
-				  ? KEA_SIM_SCGC_KBI0_MASK                                       \
-				  : ((DT_INST_IRQN(inst) == 25) ? KEA_SIM_SCGC_KBI1_MASK : 0u))),\
-			(0u)),                                                                \
+		.clock_dev = COND_CODE_1(DT_INST_NODE_HAS_PROP(inst, clocks),                     \
+					 (DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst))), (NULL)),     \
+		.clock_subsys = COND_CODE_1(DT_INST_NODE_HAS_PROP(inst, clocks),                  \
+					    ((clock_control_subsys_t)DT_INST_CLOCKS_CELL(inst, bits)), \
+					    ((clock_control_subsys_t)0)),                            \
 		.irq_config_func = COND_CODE_1(DT_INST_IRQ_HAS_IDX(inst, 0),                      \
 					       (kea_gpio_irq_config_##inst), (NULL)),     \
 	};                                                                                          \

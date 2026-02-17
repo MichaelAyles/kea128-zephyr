@@ -136,6 +136,11 @@ int main(void)
 		.mask = CAN_STD_ID_MASK,
 		.flags = 0,
 	};
+	struct can_filter can_ext_filter = {
+		.id = 0x1abcdeu,
+		.mask = CAN_EXT_ID_MASK,
+		.flags = CAN_FILTER_IDE,
+	};
 	struct wdt_timeout_cfg wdt_cfg = {
 		.window = {
 			.min = 0u,
@@ -172,9 +177,11 @@ int main(void)
 	};
 	uint8_t i2c_probe = 0x00u;
 	int can_filter_id;
+	int can_ext_filter_id;
 	int wdt_channel_id;
 	int ret;
 	bool did_bus_probe = false;
+	bool did_can_ext_probe = false;
 	uint32_t last_button_irq_count = 0u;
 
 	printk("TRK-KEA128 peripheral bring-up\n");
@@ -261,6 +268,12 @@ int main(void)
 		return can_filter_id;
 	}
 
+	can_ext_filter_id = can_add_rx_filter(can, can_rx_handler, NULL, &can_ext_filter);
+	if (can_ext_filter_id < 0) {
+		printk("can_add_rx_filter(ext) failed: %d\n", can_ext_filter_id);
+		return can_ext_filter_id;
+	}
+
 	ret = can_start(can);
 	if (ret != 0) {
 		printk("can_start failed: %d\n", ret);
@@ -297,20 +310,33 @@ int main(void)
 			printk("gpio_port_toggle_bits failed: %d\n", ret);
 		}
 
-		if (!did_bus_probe) {
-			ret = spi_transceive(spi, &spi_cfg, &spi_tx, &spi_rx);
-			printk("spi_transceive ret=%d rx=0x%02x\n", ret, spi_rx_byte);
+			if (!did_bus_probe) {
+				ret = spi_transceive(spi, &spi_cfg, &spi_tx, &spi_rx);
+				printk("spi_transceive ret=%d rx=0x%02x\n", ret, spi_rx_byte);
 
-			ret = i2c_write(i2c, &i2c_probe, sizeof(i2c_probe), 0x50);
+				ret = i2c_write(i2c, &i2c_probe, sizeof(i2c_probe), 0x50);
 			printk("i2c_write probe ret=%d\n", ret);
 
-			did_bus_probe = true;
-		}
+				did_bus_probe = true;
+			}
 
-		ret = can_send(can, &tx_frame, K_MSEC(10), can_tx_handler, NULL);
-		if (ret != 0) {
-			printk("can_send failed: %d\n", ret);
-		}
+			if (!did_can_ext_probe) {
+				struct can_frame ext_tx_frame = {
+					.id = 0x1abcdeu,
+					.dlc = 1,
+					.flags = CAN_FRAME_IDE,
+					.data = { 0x5au },
+				};
+
+				ret = can_send(can, &ext_tx_frame, K_MSEC(10), can_tx_handler, NULL);
+				printk("can_send ext ret=%d\n", ret);
+				did_can_ext_probe = true;
+			}
+
+			ret = can_send(can, &tx_frame, K_MSEC(10), can_tx_handler, NULL);
+			if (ret != 0) {
+				printk("can_send failed: %d\n", ret);
+			}
 
 		ret = wdt_feed(wdt, wdt_channel_id);
 		if (ret != 0) {
